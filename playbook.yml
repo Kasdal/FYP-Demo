@@ -1,0 +1,11 @@
+---
+
+- name: Install java on server
+  hosts: main_server
+  tasks:
+    - name: Update server
+      ansible.builtin.apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+    - name: Install Java 8
+      ansible.builtin.apt: name=openjdk-8-jre-headless
+
+- name: 
