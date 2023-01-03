@@ -1,11 +1,38 @@
 ---
-
-- name: Install java on server
-  hosts: main_server
+- name: Install java and net-tools
+  hosts: nexus_server
   tasks:
-    - name: Update server
+    - name: Update apt repo and cache
       ansible.builtin.apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
     - name: Install Java 8
-      ansible.builtin.apt: name=openjdk-8-jre-headless
+      ansible.builtin.apt: name=openjdk-8-jre-headless      
+    - name: Install net-tools
+      ansible.builtin.apt: name=net-tools  
 
-- name: 
+- name: Download Nexus from server
+  hosts: nexus_server
+  tasks: 
+    - name: Check nexus folder
+      ansible.builtin.stat:
+        path: /opt/nexus
+      register: stat_result  
+    - name: Download Nexus
+      ansible.builtin.get_url: 
+        url: https://download.sonatype.com/nexus/3/latest-unix.tar.gz
+        dest: /opt/
+      register: download
+    - name: Untar nexus installer
+      ansible.builtin.unarchive:
+        src: "{{download.dest}}"
+        dest: /opt/ 
+        remote_src: yes   
+      when: not stat_result.stat.exists    
+    - name: Find nexus folder
+      ansible.builtin.find: 
+        paths: /opt
+        pattern: "nexus-*"
+        file_type: directory
+      register: find_file
+    - name: Rename nexus folder
+      ansible.builtin.shell: mv {{find_file.files[0].path}} /opt/nexus
+      when: not stat_result.stat.exists  
